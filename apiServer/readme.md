@@ -1,4 +1,4 @@
-# go-project example folderstructure for a small server/api thingy
+# go-project example folderstructure for a small server/api 
 
 - example folderstructure for a small server/api thingy
 
