@@ -2,44 +2,54 @@ package main
 
 import (
 	"fmt"
+	"time"
 )
 
 func main (){
 	fmt.Println("heap starting")
 	h := &Heap{}
-	dailyTasks(h)
-	fmt.Printf("%+v \n", *h)
-	fmt.Printf("%+v \n", h.arr[0] )
-
+	createDailyTasks(h)
+	fmt.Printf("full queue: %+v \n", *h)
+	doTask(h)
+	fmt.Printf("now empty que: %+v \n", *h)
+	doTask(h)
 }
 
-func dailyTasks(h *Heap){
-	h.Insert(Process{"walking the dog",5,20})
-	h.Insert(Process{"feeding the cat",1,80})
-	h.Insert(Process{"cleaning the bathroom",2,10})
-	h.Insert(Process{"cooking dinner",1,25})
-	h.Insert(Process{"shopping food",3,30})
-
-	h.Insert(Process{"going to work",1,70})
-	h.Insert(Process{"brushing teeth",1,85})		// :todo NOT ON TOP! BUG!
-	h.Insert(Process{"going home",3,60})
-	h.Insert(Process{"doing work",3,65})
+func createDailyTasks(h *Heap){
+	// just some testdata to fill in:
+	h.Push(Process{"walking the dog       |",5,20})
+	h.Push(Process{"feeding the cat       |",1,80})
+	h.Push(Process{"cleaning the bathroom |",2,10})
+	h.Push(Process{"cooking dinner        |",1,25})
+	h.Push(Process{"shopping food         |",3,30})
+	h.Push(Process{"going to work         |",1,70})
+	h.Push(Process{"brushing teeth        |",1,85})
+	h.Push(Process{"walk home             |",2,60})
+	h.Push(Process{"doing work            |",4,65})
 }
 
-
-
+func doTask(h *Heap){
+	task, err := h.Pop()
+	if err != nil{
+		fmt.Println("Nothing left to do!")
+		return
+	}
+	fmt.Printf("starting %v with priority: %d. Will take %d seconds...\n",  task.name, task.prio, task.duration)
+	time.Sleep(time.Duration(task.duration) * time.Second)
+	doTask(h)
+}
 
 
 
 /*
-*	Data structure Max Heap Priority queue
+*	Max-Heap Priority queue
 */
 
 // our processes we want to queue (bigger prio -> do first)
 type Process struct{
 	name string
 	duration int
-	prio int
+	prio int		// only "important attribute"
 }
 
 // our heap structure (max heap in this case)
@@ -49,35 +59,36 @@ type Heap struct{
 
 
 // public function to add a element to the heap
-func (h *Heap) Insert(proc Process){
+func (h *Heap) Push(proc Process){
 	h.arr =  append(h.arr, proc)
 	h.heapifyUp(len(h.arr)-1)
 }
-// bring heap back into heap-state after a Input()
+// bring heap back into heap-state after Inputing element
 // does so by swapping with parent till uptop or not bigger anymore
-func (h *Heap)heapifyUp(idx int){
+func (h *Heap) heapifyUp(idx int){
 	for h.arr[idx].prio > h.arr[parent(idx)].prio {			// while( node>parent )
 		h.swap(parent(idx), idx)
+		idx = parent(idx)
 	}
 }
 
 
-// public function to "pop()" the largest key
-func (h *Heap) Extract() (Process, error) {
-	popElement := h.arr[0]		// :todo does this crash when empty in golang?
+// public function to "pop()" the root node(=largest). Error if empty
+func (h *Heap) Pop() (Process, error) {
 	length := len(h.arr) -1
 	if length < 0 {
 		return Process{}, fmt.Errorf("Heap is Empty, can not remove anything")
 	}
+	popElement := h.arr[0]
 	h.arr[0] = h.arr[length]	// swap last element to first
 	h.arr = h.arr[:length]		// remove last slice element (but does not reallocate in go if i understand correctly)
 
 	h.heapifyDown(0)			// start our sort-shuffle from index 0
 	return popElement, nil
 }
-// bring heap back into heap-state after a Extract()
+// bring heap back into heap-state after a Pop()
 // does so by potentially swapping with bigger child, moving down till bottom/no more swap
-func (h *Heap)heapifyDown(idx int){
+func (h *Heap) heapifyDown(idx int){
 	current := idx
 	last 	:= len(h.arr)-1
 	l, r 	:= left(idx), right(idx)
@@ -99,7 +110,7 @@ func (h *Heap)heapifyDown(idx int){
 
 
 /*
-*	helpers
+*	helpers for Max-Heap
 */
 
 // returns the equivalent parent/left/right node of our "thought off binary-tree"
